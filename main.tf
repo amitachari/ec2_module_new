@@ -223,6 +223,6 @@ resource "aws_instance" "server" {
       error_message = "ebr_subnet_id must be provided when ebr_enabled is true."
     }
 
-    
+
   }
 }
