@@ -3,7 +3,7 @@ output "instance_ids" {
   value       = aws_instance.server[*].id
 }
 
-output "private_ip_addresses" {
+output "private_ip" {
   description = "Primary private IP addresses from the GPN NICs"
   value       = aws_network_interface.gpn[*].private_ip
 }
