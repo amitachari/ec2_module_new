@@ -14,6 +14,13 @@ variable "ami_id" {
   type        = string
 }
 
+# variable "ami_config" {
+#   type = object({
+#     name           = string
+#     owner_accounts = list(string)
+#   })
+# }
+
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
@@ -31,10 +38,19 @@ variable "subnet_id" {
   type        = string
 }
 
-variable "ebr_enabled" {
-  description = "Enable or disable the EBR network interface"
-  type        = bool
-  default     = false
+# variable "ebr_enabled" {
+#   description = "Enable or disable the EBR network interface"
+#   type        = bool
+#   default     = false
+# }
+
+variable "network_interfaces" {
+
+  type = object({
+    enable_nas = bool
+    enable_ebr = bool
+  })
+
 }
 
 variable "ebr_subnet_id" {
@@ -43,10 +59,23 @@ variable "ebr_subnet_id" {
   default     = null
 }
 
-variable "root_volume_size" {
-  description = "Root EBS volume size in GB"
-  type        = number
-  default     = 50
+variable "nas_subnet_id" {
+  description = "NAS subnet"
+  type        = string
+  default     = null
+}
+
+# variable "root_volume_size" {
+#   description = "Root EBS volume size in GB"
+#   type        = number
+#   default     = 50
+# }
+
+variable "root_volume" {
+  type = object({
+    size = number
+    type = string
+  })
 }
 
 variable "additional_ebs_volumes" {

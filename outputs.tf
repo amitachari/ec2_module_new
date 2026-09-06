@@ -26,8 +26,6 @@ output "gpn_security_group_id" {
 output "ebr_security_group_id" {
   description = "Security group created for EBR"
   value = (
-    var.ebr_enabled
-    ? aws_security_group.ebr[0].id
-    : null
+    var.network_interfaces.enable_ebr ? aws_security_group.ebr[0].id : null
   )
 }
