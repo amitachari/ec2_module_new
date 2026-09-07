@@ -102,10 +102,10 @@ resource "aws_security_group" "ebr" {
 
 
 resource "aws_security_group" "nas" {
-  count = var.network_interfaces.enable_nas ? 1 : 0
+  count       = var.network_interfaces.enable_nas ? 1 : 0
   name_prefix = "${var.environment}-${var.app_tier}-nas-"
   description = "NAS security group for ${var.environment}"
-  vpc_id = data.aws_subnet.gpn.vpc_id
+  vpc_id      = data.aws_subnet.gpn.vpc_id
 
   dynamic "ingress" {
     for_each = var.nas_ingress_rules
@@ -141,7 +141,7 @@ resource "aws_security_group" "nas" {
 resource "aws_network_interface" "gpn" {
   count = var.instance_count
 
-  subnet_id = var.subnet_id
+  subnet_id       = var.subnet_id
   security_groups = [aws_security_group.gpn.id]
 
   # security_groups = concat(
@@ -168,7 +168,7 @@ resource "aws_network_interface" "gpn" {
 resource "aws_network_interface" "ebr" {
   count = var.network_interfaces.enable_ebr ? var.instance_count : 0
 
-  subnet_id = var.ebr_subnet_id
+  subnet_id       = var.ebr_subnet_id
   security_groups = [aws_security_group.ebr[0].id]
 
   # security_groups = concat(
@@ -193,7 +193,7 @@ resource "aws_network_interface" "ebr" {
 
 # One NAS NIC is created for every EC2 instance only when enabled.
 resource "aws_network_interface" "nas" {
-  count = var.network_interfaces.enable_nas ? var.instance_count : 0
+  count     = var.network_interfaces.enable_nas ? var.instance_count : 0
   subnet_id = var.nas_subnet_id
   security_groups = [
     aws_security_group.nas[0].id
@@ -245,8 +245,8 @@ resource "aws_instance" "server" {
     }
   }
 
-# Device index 2 adds NAS as the third NIC.
-# This block is skipped when enable_nas is false.
+  # Device index 2 adds NAS as the third NIC.
+  # This block is skipped when enable_nas is false.
   dynamic "network_interface" {
     for_each = var.network_interfaces.enable_nas ? [2] : []
     content {
@@ -277,7 +277,7 @@ resource "aws_instance" "server" {
     )
   }
 
-  
+
   tags = merge(
     var.tags,
     {
@@ -296,26 +296,26 @@ resource "aws_instance" "server" {
 
   lifecycle {
 
-  precondition {
-    condition = (
-      var.network_interfaces.enable_ebr == false ||
-      var.ebr_subnet_id != null
-    )
+    precondition {
+      condition = (
+        var.network_interfaces.enable_ebr == false ||
+        var.ebr_subnet_id != null
+      )
 
-    error_message = "ebr_subnet_id must be provided when EBR is enabled."
+      error_message = "ebr_subnet_id must be provided when EBR is enabled."
+    }
+
+    precondition {
+      condition = (
+        var.network_interfaces.enable_ebr == false ||
+        data.aws_subnet.gpn.availability_zone ==
+        data.aws_subnet.ebr[0].availability_zone
+      )
+
+      error_message = "GPN and EBR subnets must be in same AZ."
+    }
+
   }
-
-  precondition {
-    condition = (
-      var.network_interfaces.enable_ebr == false ||
-      data.aws_subnet.gpn.availability_zone ==
-      data.aws_subnet.ebr[0].availability_zone
-    )
-
-    error_message = "GPN and EBR subnets must be in same AZ."
-  }
-
-}
 }
 
 

@@ -4,9 +4,9 @@ locals {
     for instance_index in range(var.instance_count) : [
       for volume in var.additional_ebs_volumes : {
         instance_index = instance_index
-        device_name = volume.device_name
-        volume_size = volume.volume_size
-        key = "${instance_index}-${volume.device_name}"
+        device_name    = volume.device_name
+        volume_size    = volume.volume_size
+        key            = "${instance_index}-${volume.device_name}"
       }
 
     ]
@@ -22,8 +22,8 @@ resource "aws_ebs_volume" "data" {
   }
 
   availability_zone = data.aws_subnet.gpn.availability_zone
-  size = each.value.volume_size
-  encrypted = true
+  size              = each.value.volume_size
+  encrypted         = true
   tags = merge(
     var.tags,
     {
@@ -44,7 +44,7 @@ resource "aws_volume_attachment" "data" {
   }
 
   device_name = each.value.device_name
-  volume_id =  aws_ebs_volume.data[each.key].id
-  instance_id = aws_instance.server[ each.value.instance_index].id
+  volume_id   = aws_ebs_volume.data[each.key].id
+  instance_id = aws_instance.server[each.value.instance_index].id
 
 }
