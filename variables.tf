@@ -72,6 +72,15 @@ variable "nas_subnet_id" {
 # }
 
 
+variable "root_volume" {
+  description = "Root EBS volume configuration"
+
+  type = object({
+    size = number
+    type = string
+  })
+}
+
 variable "additional_ebs_volumes" {
   description = "Additional EBS volumes attached to every instance"
 
