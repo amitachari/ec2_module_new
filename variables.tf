@@ -83,11 +83,11 @@ variable "additional_ebs_volumes" {
   default = []
 }
 
-variable "security_group_ids" {
-  description = "Existing security group IDs attached to both GPN and EBR NICs"
-  type        = list(string)
-  default     = []
-}
+# variable "security_group_ids" {
+#   description = "Existing security group IDs attached to both GPN and EBR NICs"
+#   type        = list(string)
+#   default     = []
+# }
 
 variable "gpn_ingress_rules" {
   description = "Custom inbound rules for the GPN security group"
@@ -159,6 +159,33 @@ variable "ebr_egress_rules" {
       cidr_blocks = ["0.0.0.0/0"]
     }
   ]
+}
+
+variable "nas_ingress_rules" {
+  description = "Custom inbound rules for the NAS security group"
+
+  type = list(object({
+    description = string
+    from_port   = number
+    to_port     = number
+    protocol    = string
+    cidr_blocks = list(string)
+  }))
+
+  default = []
+}
+
+variable "nas_egress_rules" {
+  description = "Custom outbound rules for the NAS security group"
+
+  type = list(object({
+    description = string
+    from_port   = number
+    to_port     = number
+    protocol    = string
+    cidr_blocks = list(string)
+  }))
+
 }
 
 variable "tags" {

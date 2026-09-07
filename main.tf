@@ -100,11 +100,49 @@ resource "aws_security_group" "ebr" {
   )
 }
 
+
+resource "aws_security_group" "nas" {
+  count = var.network_interfaces.enable_nas ? 1 : 0
+  name_prefix = "${var.environment}-${var.app_tier}-nas-"
+  description = "NAS security group for ${var.environment}"
+  vpc_id = data.aws_subnet.gpn.vpc_id
+
+  dynamic "ingress" {
+    for_each = var.nas_ingress_rules
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.from_port
+      to_port     = ingress.value.to_port
+      protocol    = ingress.value.protocol
+      cidr_blocks = ingress.value.cidr_blocks
+    }
+  }
+
+  dynamic "egress" {
+    for_each = var.nas_egress_rules
+    content {
+      description = egress.value.description
+      from_port   = egress.value.from_port
+      to_port     = egress.value.to_port
+      protocol    = egress.value.protocol
+      cidr_blocks = egress.value.cidr_blocks
+    }
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${var.environment}-${var.app_tier}-nas-sg"
+      NetworkType = "NAS"
+    }
+  )
+}
 # One GPN NIC is created for every EC2 instance.
 resource "aws_network_interface" "gpn" {
   count = var.instance_count
 
   subnet_id = var.subnet_id
+  security_groups = [aws_security_group.gpn.id]
 
   # security_groups = concat(
   #   [aws_security_group.gpn.id],
@@ -131,6 +169,7 @@ resource "aws_network_interface" "ebr" {
   count = var.network_interfaces.enable_ebr ? var.instance_count : 0
 
   subnet_id = var.ebr_subnet_id
+  security_groups = [aws_security_group.ebr[0].id]
 
   # security_groups = concat(
   #   [aws_security_group.ebr[0].id],
@@ -152,11 +191,16 @@ resource "aws_network_interface" "ebr" {
   )
 }
 
+# One NAS NIC is created for every EC2 instance only when enabled.
 resource "aws_network_interface" "nas" {
-  count     = var.network_interfaces.enable_nas ? var.instance_count : 0
+  count = var.network_interfaces.enable_nas ? var.instance_count : 0
   subnet_id = var.nas_subnet_id
+  security_groups = [
+    aws_security_group.nas[0].id
+  ]
+
   # security_groups = concat(
-  #   [aws_security_group.gpn.id],
+  #   [aws_security_group.nas[0].id],
   #   var.security_group_ids
   # )
 
@@ -169,10 +213,13 @@ resource "aws_network_interface" "nas" {
         var.app_tier,
         count.index + 1
       )
+
+      NetworkType = "NAS"
     }
   )
-
 }
+
+
 
 # Create the EC2 instances.
 resource "aws_instance" "server" {
@@ -188,7 +235,7 @@ resource "aws_instance" "server" {
   }
 
   # Device index 1 adds EBR as the secondary NIC.
-  # This block is skipped when ebr_enabled is false.
+  # This block is skipped when enable_ebr is false.
   dynamic "network_interface" {
     for_each = var.network_interfaces.enable_ebr ? [1] : []
 
@@ -198,7 +245,8 @@ resource "aws_instance" "server" {
     }
   }
 
-
+# Device index 2 adds NAS as the third NIC.
+# This block is skipped when enable_nas is false.
   dynamic "network_interface" {
     for_each = var.network_interfaces.enable_nas ? [2] : []
     content {
@@ -206,6 +254,9 @@ resource "aws_instance" "server" {
       device_index         = 2
     }
   }
+
+
+
   root_block_device {
     volume_size           = var.root_volume.size
     volume_type           = var.root_volume.type
