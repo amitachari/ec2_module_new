@@ -106,10 +106,10 @@ resource "aws_network_interface" "gpn" {
 
   subnet_id = var.subnet_id
 
-  security_groups = concat(
-    [aws_security_group.gpn.id],
-    var.security_group_ids
-  )
+  # security_groups = concat(
+  #   [aws_security_group.gpn.id],
+  #   var.security_group_ids
+  # )
 
   tags = merge(
     var.tags,
@@ -132,10 +132,10 @@ resource "aws_network_interface" "ebr" {
 
   subnet_id = var.ebr_subnet_id
 
-  security_groups = concat(
-    [aws_security_group.ebr[0].id],
-    var.security_group_ids
-  )
+  # security_groups = concat(
+  #   [aws_security_group.ebr[0].id],
+  #   var.security_group_ids
+  # )
 
   tags = merge(
     var.tags,
@@ -155,10 +155,10 @@ resource "aws_network_interface" "ebr" {
 resource "aws_network_interface" "nas" {
   count     = var.network_interfaces.enable_nas ? var.instance_count : 0
   subnet_id = var.nas_subnet_id
-  security_groups = concat(
-    [aws_security_group.gpn.id],
-    var.security_group_ids
-  )
+  # security_groups = concat(
+  #   [aws_security_group.gpn.id],
+  #   var.security_group_ids
+  # )
 
   tags = merge(
     var.tags,
@@ -226,18 +226,7 @@ resource "aws_instance" "server" {
     )
   }
 
-  dynamic "ebs_block_device" {
-    for_each = var.additional_ebs_volumes
-
-    content {
-      device_name           = ebs_block_device.value.device_name
-      volume_size           = ebs_block_device.value.volume_size
-      volume_type           = "gp3"
-      encrypted             = true
-      delete_on_termination = false
-    }
-  }
-
+  
   tags = merge(
     var.tags,
     {
@@ -255,14 +244,27 @@ resource "aws_instance" "server" {
   )
 
   lifecycle {
-    precondition {
-      condition = (
-        var.network_interfaces.enable_ebr == false || var.ebr_subnet_id != null
-      )
 
-      error_message = "ebr_subnet_id must be provided when ebr_enabled is true."
-    }
+  precondition {
+    condition = (
+      var.network_interfaces.enable_ebr == false ||
+      var.ebr_subnet_id != null
+    )
 
-
+    error_message = "ebr_subnet_id must be provided when EBR is enabled."
   }
+
+  precondition {
+    condition = (
+      var.network_interfaces.enable_ebr == false ||
+      data.aws_subnet.gpn.availability_zone ==
+      data.aws_subnet.ebr[0].availability_zone
+    )
+
+    error_message = "GPN and EBR subnets must be in same AZ."
+  }
+
 }
+}
+
+
