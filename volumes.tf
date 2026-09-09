@@ -6,9 +6,9 @@ locals {
         instance_index = instance_index
         device_name    = volume.device_name
         volume_size    = volume.volume_size
-        # volume_type = volume.type
-        # encrypted = volume.encrypted
-        # throughput = volume.throughput
+        volume_type = volume.type
+        encrypted = volume.encrypted
+        throughput = volume.throughput
         key            = "${instance_index}-${volume.device_name}"
       }
 
@@ -26,10 +26,10 @@ resource "aws_ebs_volume" "data" {
 
   availability_zone = data.aws_subnet.gpn.availability_zone
   size              = each.value.volume_size
-  encrypted         = true
-#   type = each.value.volume_type
-#   encrypted = each.value.encrypted
-#   throughput = (each.value.volume_type == "gp3"? each.value.throughput: null)
+  #encrypted         = true
+  type = each.value.volume_type
+  encrypted = each.value.encrypted
+  throughput = (each.value.volume_type == "gp3"? each.value.throughput: null)
 
   tags = merge(
     var.tags,

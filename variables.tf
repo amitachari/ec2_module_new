@@ -87,17 +87,15 @@ variable "additional_ebs_volumes" {
   type = list(object({
     device_name = string
     volume_size = number
-    # type = optional(string, "gp3")
-    # encrypted = optional(bool, true)
-    # throughput = optional(number, 125)
+    type = optional(string, "gp3")
+    encrypted = optional(bool, true)
+    throughput = optional(number, 125)
   }))
 
   default = []
 }
 
-variable "EBS_volume_type"{
- type = string
-}
+
 
 # variable "security_group_ids" {
 #   description = "Existing security group IDs attached to both GPN and EBR NICs"
