@@ -227,7 +227,6 @@ resource "aws_instance" "server" {
   ami   = var.ami_id
   # ami           = data.aws_ami.selected.id
   instance_type = var.instance_type
-
   # Device index 0 makes GPN the primary NIC.
   network_interface {
     network_interface_id = aws_network_interface.gpn[count.index].id
